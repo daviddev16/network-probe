@@ -1,4 +1,4 @@
-package com.networkprobe.commands;
+package com.networkprobe.command;
 
 public enum CommandType {
 
@@ -11,7 +11,7 @@ public enum CommandType {
 		this.commandId = commandId;
 	}
 	
-	public int getCommandId() {
+	public int getId() {
 		return commandId;
 	}
 
@@ -21,7 +21,7 @@ public enum CommandType {
 	
 	public static CommandType getCommandTypeById(int commandId) {
 		for(CommandType commandType : values())
-			if (commandType.getCommandId() == commandId)
+			if (commandType.getId() == commandId)
 				return commandType;
 		return CommandType.UNKNOWN;
 	}

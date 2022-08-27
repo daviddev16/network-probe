@@ -1,4 +1,4 @@
-package com.networkprobe.networking;
+package com.networkprobe.networking.subject;
 
 
 import java.net.DatagramSocket;

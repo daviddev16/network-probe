@@ -1,4 +1,4 @@
-package com.networkprobe.networking;
+package com.networkprobe.networking.subject;
 
 public enum NetworkSubjectType {
 

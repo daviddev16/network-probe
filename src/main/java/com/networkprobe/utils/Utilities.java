@@ -1,13 +1,9 @@
 package com.networkprobe.utils;
 
+
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.Enumeration;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -17,26 +13,19 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 
-import com.networkprobe.Constants;
-
 public final class Utilities {
 	
-	public static InetAddress getBroadcastInetAddress() throws SocketException, UnknownHostException {
-		Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-		while (interfaces.hasMoreElements()) {
-			NetworkInterface networkInterface = interfaces.nextElement();
-			if (networkInterface.isLoopback())
-				continue;
-			for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
-				if (interfaceAddress.getBroadcast() != null)
-					return interfaceAddress.getBroadcast();
-			}
-		}
-		return InetAddress.getByName(Constants.CLASSFUL_BROADCAST_ADDRESS);
+	/** Verificar se a classe do IP da máquina local é a mesma que a classe do InetAddress informado. */
+	public static boolean checkCIDR(InetAddress inetAddress) {
+		try {
+			return InetAddress.getLocalHost().getHostAddress().split("\\.")[0]
+					.equals(inetAddress.getHostAddress().split("\\.")[0]);
+		} catch (UnknownHostException e) { /* ignore */ }
+		return false;
 	}
 	
-	public static boolean isNullOrEmpty(String str) {
-		return (str == null || str.isEmpty());
+	public static void updateRegSubkey(String regkeyPath, String subkeyName, String newValue) throws IOException {
+		Runtime.getRuntime().exec(String.format("reg add \"%s\" /v %s /t REG_SZ /d %s /f", regkeyPath, subkeyName, newValue));
 	}
 	
 	public static CommandLine createCommandLine(String[] args) {
@@ -66,22 +55,19 @@ public final class Utilities {
 		return commandLine;
 	}
 	
-	public static void updateClientBDAddress(String address) throws IOException {
-		Runtime.getRuntime().exec(String.format("reg add \"%s\" /v %s /t REG_SZ /d %s /f", 
-				"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\TurboPower\\FlashFiler\\Client Configuration",
-				"Server",
-				address));
-		
-		System.out.println("Done.");
-	}
-	
-	public static void logException(Logger logger, Exception exception) {
+	public static void logException(Logger logger, Exception exception, boolean exit) {
 		logger.error("~~~~~~~~~ EXCEPTION ~~~~~~~~~");
 		logger.error(exception.getMessage());
 		for (StackTraceElement element : exception.getStackTrace()) {
 			logger.error(element.toString());
 		}
 		logger.error("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+		exception.printStackTrace();
+		if(exit) System.exit(-1);
+	}
+	
+	public static boolean isNullOrEmpty(String str) {
+		return (str == null || str.isEmpty());
 	}
 
 }
