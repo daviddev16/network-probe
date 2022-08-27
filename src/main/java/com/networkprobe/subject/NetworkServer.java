@@ -49,13 +49,15 @@ public class NetworkServer implements NetworkSubject {
 				if (!commandManager.getCommands().containsKey(commandId))
 					throw new AttributeNotFoundException("Comando não achado.");
 
-				LOG.info("Command \"{}\" requested by \"{}\"", CommandType.REQUEST_SERVER_IP.name(),
+				LOG.info("Command '{}' requested by '{}'", CommandType.REQUEST_SERVER_IP.name(),
 						requestPacket.getAddress().getHostAddress());
 
 				CommandExecutor executor = commandManager.get(commandId);
-				EligibleResponse eligibleResponse = executor.execute();
+				
+				/* Retorna uma resposta do servidor/comando em byte array */
+				EligibleResponse response = executor.execute();
 
-				byte[] buffer = eligibleResponse.getBuffer();
+				byte[] buffer = response.getBuffer();
 				NetworkEnvironment.getEnvironment().sendAsyncPacket(buffer, buffer.length, getSocket(),
 						requestPacket.getAddress(), requestPacket.getPort());
 

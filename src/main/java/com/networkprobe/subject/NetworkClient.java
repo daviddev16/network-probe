@@ -1,6 +1,5 @@
 package com.networkprobe.subject;
 
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 import javax.management.AttributeNotFoundException;
@@ -9,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.networkprobe.Constants;
+import com.networkprobe.alterdata.AlterdataAPI;
+import com.networkprobe.alterdata.ClienteBDPropertyType;
 import com.networkprobe.command.CommandType;
 import com.networkprobe.networking.NetworkBroadcast;
 import com.networkprobe.networking.NetworkEnvironment;
@@ -30,53 +31,47 @@ public class NetworkClient implements NetworkSubject {
 		} catch (Exception e) {
 			Utilities.logException(LOG, e, true);
 		}
-		LOG.info("Running");
-		while (true) {
-			try {
-				LOG.info("Requesting server IP address...");
-
-				NetworkBroadcast.broadcast((address) -> {
-					synchronized (socket) 
-					{
-						byte[] buffer = CommandType.REQUEST_SERVER_IP.getIdAsString().getBytes();
-						NetworkEnvironment.getEnvironment().sendAsyncPacket(buffer, buffer.length, getSocket(), address, Constants.PORT);
-					}
-				}, false);
 
 
-				LOG.info("Waiting for the server answer...");
+		try {
+			LOG.info("Requesting IP address to the network");
 
-				/*byte[] serverResponseBuf = new byte[Constants.EXCHANGE_DATA_MAX_LENGTH];
-				DatagramPacket serverResponsePacket = new DatagramPacket(serverResponseBuf, serverResponseBuf.length);
-				getSocket().receive(serverResponsePacket);
-				 */
-				
-				byte[] receivedData = NetworkEnvironment.getEnvironment()
-						.receive(socket).getData();
+			/* Sending a broadcast to all Network interfaces broadcast IP. */
+			NetworkBroadcast.broadcast((address) -> 
+			{
 
-				/* depois que recebe a resposta de uma rede, ele deve ignorar as outras. */
-				NetworkEnvironment.getEnvironment().clearAllPackets();
+				byte[] buffer = CommandType.REQUEST_SERVER_IP.getIdAsString().getBytes();
+				NetworkEnvironment.getEnvironment().sendAsyncPacket(buffer, buffer.length, getSocket(), address, Constants.PORT);
 
-				String serverIpAddress = new String(receivedData).trim();
-				LOG.info("Recebido: " + serverIpAddress);
-				LOG.info("Atualizando ip do clienteBD para " + serverIpAddress);
+			}, false);
 
-				/* atualiza o registro do cliente BD */
-				//Utilities.updateClientBDAddress(serverIpAddress);
+			/* adicionar timer de resposta */
 
-				socket.close();
-				Runtime.getRuntime().exit(-1);
+			LOG.info("Waiting for the server response [!]");
 
-			} catch (Exception e) {
-				if (e instanceof ArithmeticException || e instanceof AttributeNotFoundException) {
-					Utilities.logException(LOG, e, false);
-					continue;
-				}
-				Utilities.logException(LOG, e, true);
+			byte[] receivedData = NetworkEnvironment.getEnvironment()
+					.receive(socket).getData();
+
+			/* depois que recebe a resposta de uma rede, ele deve ignorar as outras. */
+			NetworkEnvironment.getEnvironment().clearAllPackets();
+
+			String serverAddress = new String(receivedData).trim();
+			LOG.info("Recebido: " + serverAddress);
+			LOG.info("Atualizando ip do clienteBD para " + serverAddress);
+
+			AlterdataAPI.updateClienteBDProperty(ClienteBDPropertyType.SERVER_ADDRESS, serverAddress);
+
+			getSocket().close();
+			Runtime.getRuntime().exit(-1);
+
+		} catch (Exception e) {
+			if (e instanceof ArithmeticException || e instanceof AttributeNotFoundException) {
+				Utilities.logException(LOG, e, false);
 			}
+			Utilities.logException(LOG, e, true);
 		}
 	}
-
+	
 	public void close() {
 		getSocket().close();
 	}
@@ -85,7 +80,7 @@ public class NetworkClient implements NetworkSubject {
 		return NetworkSubjectType.CLIENT;
 	}
 
-	public DatagramSocket getSocket() {
+	public synchronized DatagramSocket getSocket() {
 		return socket;
 	}
 

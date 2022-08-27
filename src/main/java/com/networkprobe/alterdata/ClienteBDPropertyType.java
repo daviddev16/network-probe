@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public enum ClienteBDPropertyType {
 
-	DATABASE_NAME              ("Database"       , "ALTERDATA_{SYSTEM}"),
+	DATABASE_NAME              ("Database"       , "ALTERDATA_{SISTEMA}"),
 	SERVER_ADDRESS             ("Server"         , "localhost"),
 	
 	CHANGE_DATABASE_PROVIDER   ("ProviderName"   , "PostgreSQL", "SQL Server"),
