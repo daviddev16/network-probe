@@ -8,6 +8,7 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.naming.directory.AttributeInUseException;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +33,14 @@ public class NetworkProbeApp {
 	public static void main(String[] args) throws SocketException {
 
 		try {
-			LOG.info("NetworkProbe {}", VERSION);
-
 			CommandLine commandLine = createCommandLine(args);
+
+			if (commandLine.hasOption("enableLogging") && 
+					commandLine.getOptionValue("enableLogging").toUpperCase().equals("OFF")){
+				org.apache.log4j.Logger.getRootLogger().setLevel(Level.OFF);
+			}
+				
+			LOG.info("NetworkProbe {}", VERSION);
 			LOG.info("CommandLine loaded");
 
 			String networkSubjectName = commandLine.getOptionValue("subjectTypeName").toUpperCase();
@@ -54,17 +60,17 @@ public class NetworkProbeApp {
 				CommandManager.getManager().register(CommandType.UNKNOWN, new DummyCommand());
 			}
 
-			LOG.info("Loading NetworkSubjectFactory...");
+			LOG.info("Loading NetworkSubjectFactory");
 			NetworkSubjectFactory.create();
 
-			LOG.info("Loading NetworkEnvironment...");
+			LOG.info("Loading NetworkEnvironment");
 			NetworkEnvironment.create();
 
-			LOG.info("Setting up NetworkSubject wrapper...");
+			LOG.info("Setting up NetworkSubject wrapper");
 			NetworkSubject networkSubject = NetworkSubjectFactory.getFactory()
 					.getSubjectOf(subjectType);
 
-			networkSubject.execute();
+			networkSubject.execute(commandLine);
 
 		} catch (Exception e) {
 			if (e instanceof InstanceAlreadyExistsException) {

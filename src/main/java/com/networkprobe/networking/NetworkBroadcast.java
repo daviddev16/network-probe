@@ -22,12 +22,14 @@ public final class NetworkBroadcast {
 
 	private static final Logger LOG = LoggerFactory.getLogger(NetworkClient.class);
 
-	public static final String CLASSFUL_BROADCAST_ADDRESS  = "255.255.255.255";
-
+	public static final  String DEFAULT_BROADCAST_ADDRESS = "255.255.255.255";
+	
 	private static Set<InetAddress> broadcastAddresses = Collections.synchronizedSet(new HashSet<InetAddress>());
 
 	public static void registerAllBroadcastAddresses() throws SocketException {
+		
 		Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+		
 		while (interfaces.hasMoreElements()) {
 			NetworkInterface networkInterface = interfaces.nextElement();
 			if (networkInterface.isLoopback())
@@ -40,7 +42,7 @@ public final class NetworkBroadcast {
 		}
 		if(getAllBroadcastAddresses().isEmpty())
 			try {
-				getAllBroadcastAddresses().add(InetAddress.getByName(CLASSFUL_BROADCAST_ADDRESS));
+				getAllBroadcastAddresses().add(InetAddress.getByName(DEFAULT_BROADCAST_ADDRESS));
 			} catch (UnknownHostException e) {
 				LOG.info("{} could not register any broadcast address.", NetworkBroadcast.class.getSimpleName());
 				Utilities.logException(LOG, e, true);

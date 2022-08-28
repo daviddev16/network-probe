@@ -15,17 +15,13 @@ import org.slf4j.Logger;
 
 public final class Utilities {
 	
-	/** Verificar se a classe do IP da máquina local é a mesma que a classe do InetAddress informado. */
+	/** Verificar se a classe do IP da mï¿½quina local ï¿½ a mesma que a classe do InetAddress informado. */
 	public static boolean checkCIDR(InetAddress inetAddress) {
 		try {
 			return InetAddress.getLocalHost().getHostAddress().split("\\.")[0]
 					.equals(inetAddress.getHostAddress().split("\\.")[0]);
 		} catch (UnknownHostException e) { /* ignore */ }
 		return false;
-	}
-	
-	public static void updateRegSubkey(String regkeyPath, String subkeyName, String newValue) throws IOException {
-		Runtime.getRuntime().exec(String.format("reg add \"%s\" /v %s /t REG_SZ /d %s /f", regkeyPath, subkeyName, newValue));
 	}
 	
 	public static CommandLine createCommandLine(String[] args) {
@@ -39,8 +35,16 @@ public final class Utilities {
 				.required(true)
 				.desc("Subject type for the current machine")
 				.build();
+		
+		Option enableLoggingOpt = Option.builder("l")
+				.longOpt("enableLogging")
+				.hasArg()
+				.required(false)
+				.desc("Set the logger state to ON/OFF")
+				.build();
 
 		options.addOption(subjectTypeOpt);
+		options.addOption(enableLoggingOpt);
 
 		try {
 			DefaultParser parser = new DefaultParser();
@@ -64,6 +68,14 @@ public final class Utilities {
 		logger.error("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 		exception.printStackTrace();
 		if(exit) System.exit(-1);
+	}
+	
+	public static String getDataAsString(byte[] data) throws IOException {
+		try {
+			return new String(data).trim();
+		} catch (Exception e) {
+			throw new IOException("Invalid data.");
+		}
 	}
 	
 	public static boolean isNullOrEmpty(String str) {

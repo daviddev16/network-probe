@@ -5,6 +5,7 @@ import java.net.DatagramSocket;
 
 import javax.management.AttributeNotFoundException;
 
+import org.apache.commons.cli.CommandLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,10 +25,9 @@ public class NetworkServer implements NetworkSubject {
 
 	private DatagramSocket socket;
 
-	public NetworkServer() {
-	}
+	public NetworkServer() {}
 
-	public void execute() {
+	public void execute(CommandLine args) {
 		try {
 			socket = new DatagramSocket(Constants.PORT);
 		} catch (Exception e1) {
@@ -39,30 +39,36 @@ public class NetworkServer implements NetworkSubject {
 
 		while (true) {
 			try {
-				/* recebendo comando do CLIENT */
-				byte[] recBuf = new byte[Constants.EXCHANGE_DATA_MAX_LENGTH];
-				DatagramPacket requestPacket = new DatagramPacket(recBuf, recBuf.length);
-				getSocket().receive(requestPacket);
+				/* recebendo comando do client */
+				DatagramPacket receivedPacket = NetworkEnvironment.getEnvironment().receive(socket);
+
+				byte[] receivedData = receivedPacket.getData();
+
+				if(receivedData.length > Constants.EXCHANGE_DATA_MAX_LENGTH)
+					continue;
+
+				/* o cliente vai sempre enviar uma String em buffer */
+				String clientRequest = Utilities.getDataAsString(receivedData);
 
 				/* Respondendo comando */
-				Integer commandId = Integer.parseInt(new String(requestPacket.getData()).trim());
+				Integer commandId = Integer.parseInt(clientRequest);
 				if (!commandManager.getCommands().containsKey(commandId))
-					throw new AttributeNotFoundException("Comando não achado.");
+					throw new AttributeNotFoundException("Comando nï¿½o achado.");
 
 				LOG.info("Command '{}' requested by '{}'", CommandType.REQUEST_SERVER_IP.name(),
-						requestPacket.getAddress().getHostAddress());
+						receivedPacket.getAddress().getHostAddress());
 
 				CommandExecutor executor = commandManager.get(commandId);
-				
+
 				/* Retorna uma resposta do servidor/comando em byte array */
 				EligibleResponse response = executor.execute();
 
 				byte[] buffer = response.getBuffer();
 				NetworkEnvironment.getEnvironment().sendAsyncPacket(buffer, buffer.length, getSocket(),
-						requestPacket.getAddress(), requestPacket.getPort());
+						receivedPacket.getAddress(), receivedPacket.getPort());
 
 				LOG.info("{} sent to \"{}\"", String.format("[Response=%s]", new String(buffer)),
-						String.format("%s:%s", requestPacket.getAddress().getHostAddress(), requestPacket.getPort()));
+						String.format("%s:%s", receivedPacket.getAddress().getHostAddress(), receivedPacket.getPort()));
 
 			} catch (Exception e) {
 				if (e instanceof ArithmeticException || e instanceof AttributeNotFoundException) {
