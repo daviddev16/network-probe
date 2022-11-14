@@ -14,7 +14,7 @@ import javax.management.InstanceAlreadyExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.networkprobe.Constants;
+import com.networkprobe.utils.Constants;
 
 /**
  * it manages the data traffic 
@@ -58,16 +58,6 @@ public final class NetworkEnvironment {
 				getPacketSenders().remove(packetSender);
 			}
 		} catch (InterruptedException e) {/* ignore */}
-	}
-
-	public synchronized void clearAllPackets() {
-		for (NetworkPacketSender packetSender : getPacketSenders()) {
-			if(!packetSender.isDone())
-				continue;
-			if(packetSender != null && getPacketSenders().contains(packetSender))
-				clearPacketSender(packetSender);
-		}
-		LOG.info("Packet senders cleared.");
 	}
 
 	public List<NetworkPacketSender> getPacketSenders() {

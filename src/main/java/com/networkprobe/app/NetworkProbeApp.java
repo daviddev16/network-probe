@@ -23,7 +23,7 @@ import com.networkprobe.networking.subject.NetworkSubjectFactory;
 import com.networkprobe.networking.subject.NetworkSubjectType;
 import com.networkprobe.utils.Utilities;
 
-import static com.networkprobe.Constants.VERSION;
+import static com.networkprobe.utils.Constants.VERSION;
 import static com.networkprobe.utils.Utilities.createCommandLine;
 
 public class NetworkProbeApp {

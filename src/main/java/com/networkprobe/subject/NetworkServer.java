@@ -1,5 +1,6 @@
 package com.networkprobe.subject;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
@@ -9,7 +10,6 @@ import org.apache.commons.cli.CommandLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.networkprobe.Constants;
 import com.networkprobe.command.CommandExecutor;
 import com.networkprobe.command.CommandManager;
 import com.networkprobe.command.CommandType;
@@ -17,6 +17,7 @@ import com.networkprobe.command.response.EligibleResponse;
 import com.networkprobe.networking.NetworkEnvironment;
 import com.networkprobe.networking.subject.NetworkSubject;
 import com.networkprobe.networking.subject.NetworkSubjectType;
+import com.networkprobe.utils.Constants;
 import com.networkprobe.utils.Utilities;
 
 public class NetworkServer implements NetworkSubject {
@@ -49,11 +50,15 @@ public class NetworkServer implements NetworkSubject {
 
 				/* o cliente vai sempre enviar uma String em buffer */
 				String clientRequest = Utilities.getDataAsString(receivedData);
-
+				
+				/* requisições são recebidas como um int, caso não for, deve ignorar. */
+				if (!isInteger(clientRequest))
+					continue;
+				
 				/* Respondendo comando */
 				Integer commandId = Integer.parseInt(clientRequest);
 				if (!commandManager.getCommands().containsKey(commandId))
-					throw new AttributeNotFoundException("Comando n�o achado.");
+					throw new AttributeNotFoundException("Comando não achado.");
 
 				LOG.info("Command '{}' requested by '{}'", CommandType.REQUEST_SERVER_IP.name(),
 						receivedPacket.getAddress().getHostAddress());
@@ -71,12 +76,22 @@ public class NetworkServer implements NetworkSubject {
 						String.format("%s:%s", receivedPacket.getAddress().getHostAddress(), receivedPacket.getPort()));
 
 			} catch (Exception e) {
-				if (e instanceof ArithmeticException || e instanceof AttributeNotFoundException) {
+				if (e instanceof ArithmeticException || e instanceof AttributeNotFoundException 
+						|| e instanceof IOException) {
 					Utilities.logException(LOG, e, false);
 					continue;
 				}
 				Utilities.logException(LOG, e, true);
 			}
+		}
+	}
+	
+	public static boolean isInteger(String value) {
+		try {
+			Integer.parseInt(value);
+			return true;
+		} catch (Exception e) {
+			return false;
 		}
 	}
 

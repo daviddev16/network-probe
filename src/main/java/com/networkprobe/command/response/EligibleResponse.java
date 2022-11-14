@@ -1,6 +1,6 @@
 package com.networkprobe.command.response;
 
-import com.networkprobe.Constants;
+import com.networkprobe.utils.Constants;
 
 public abstract interface EligibleResponse {
 
